@@ -1,17 +1,18 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <vector>
+enum Color { RED, BLACK};
 
 class Node{
 public:
-	Node(){};
-	~Node(){};
+	Node(int nodeValue);
 
-private:
-	bool color; // 0 == black, 1 == red 
-	bool isRoot; //might not be necessary, will see later on
-	
-}	
+	Color color;
+	int nodeValue;
+
+	Node* left;
+	Node* right;
+	Node* parent;
+};
 
 #endif //NODE_H
