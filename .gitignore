@@ -17,6 +17,7 @@ Makefile
 # === Editor/IDE files ===
 .vscode/
 .idea/
+.gitignore
 *.code-workspace
 
 # === OS-specific ===
