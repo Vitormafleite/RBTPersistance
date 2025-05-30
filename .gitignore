@@ -9,6 +9,7 @@ build/
 *.so
 *.dll
 *.dSYM/
+rbtree
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
