@@ -1,6 +1,8 @@
 #ifndef RBTREE_H
 #define RBTREE_H
 
+#include <limits>
+
 #include "Node.h"
 
 class RBTree{
@@ -9,6 +11,8 @@ public:
 	~RBTree();
 	
 	Node* root; 
+
+	int currentVersion;
 
 	//Insert Logic
 	void insertValue(int value);
@@ -21,6 +25,9 @@ public:
 	void deleteValue(int value);
 	void fixDelete(Node* node);
 
+	//successor
+	int successor(int value); 
+
 	void rotateLeft(Node* node);
     void rotateRight(Node* node);
 
@@ -29,6 +36,8 @@ public:
 
 	void remove(int removeValue){};
 	void sucessor(int sucessorValue, int treeVersion);
+
+	void updateReturnPointers(Node* oldNode, Node* newNode, int version);
 
 	void deleteTree(Node* node);
 };

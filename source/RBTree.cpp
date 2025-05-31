@@ -3,6 +3,7 @@
 
 RBTree::RBTree() {
     root = nullptr;
+    currentVersion = 0;
 }
 
 RBTree::~RBTree(){
@@ -20,7 +21,7 @@ void RBTree::deleteTree(Node* node) {
 }
 
 void RBTree::insertValue(int value) {
-    Node* newNode = new Node(value);
+    Node* newNode = new Node(value, currentVersion);
     root = BinarySearchInsert(root, newNode);
     fixInsert(newNode);
 }
@@ -151,7 +152,7 @@ void RBTree::deleteValue(int value) {
     }
 
     if (z == nullptr)
-        return; // Node not found
+        return;
 
     Node* y = z;
     Color yOriginalColor = y->color;
@@ -260,6 +261,38 @@ void RBTree::fixDelete(Node* x) {
     if (x)
         x->color = BLACK;
 }
+
+int RBTree::successor(int value) {
+    Node* curr = root;
+    Node* succ = nullptr;
+
+    while (curr) {
+        if (curr->nodeValue > value) {
+            succ = curr;
+            curr = curr->left;
+        } else {
+            curr = curr->right;
+        }
+    }
+
+    return succ ? succ->nodeValue : std::numeric_limits<int>::max(); //weird way to return infinite, but it works i guess...
+}
+
+void RBTree::updateReturnPointers(Node* oldNode, Node* newNode, int version) {
+    if (oldNode->rParentLeft) {
+        oldNode->rParentLeft = oldNode->rParentLeft->addMod(FIELD_LEFT, newNode, version);
+    }
+    if (oldNode->rParentRight) {
+        oldNode->rParentRight = oldNode->rParentRight->addMod(FIELD_RIGHT, newNode, version);
+    }
+    if (oldNode->rLeftSon) {
+        oldNode->rLeftSon = oldNode->rLeftSon->addMod(FIELD_PARENT, newNode, version);
+    }
+    if (oldNode->rRightSon) {
+        oldNode->rRightSon = oldNode->rRightSon->addMod(FIELD_PARENT, newNode, version);
+    }
+}
+
 
 void RBTree::print() {
     printTree(root, 0);
