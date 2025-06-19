@@ -9,6 +9,8 @@ public:
 	~App();
 
 	void run();
+
+	void test();
 };
 
 #endif //APP_H

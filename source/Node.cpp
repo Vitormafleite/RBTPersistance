@@ -14,6 +14,8 @@ Node::Node(int nodeValue, int versionOnCreation) {
     this->rLeftSon = nullptr;
     this->rRightSon = nullptr;
 
+    this->previousNodeVersion = nullptr;
+
     //Mods 
     this->modCount = 0;
     this->nodeVersion = versionOnCreation;
@@ -93,6 +95,9 @@ Node* Node::copyNode(int newVersion) {
     newNode->right = this->right;
     newNode->parent = this->parent;
 
+    //set return to older version
+    newNode->previousNodeVersion = this;
+
     // Copy return pointers
     newNode->rParentLeft = this->rParentLeft;
     newNode->rParentRight = this->rParentRight;
@@ -122,9 +127,7 @@ Node* Node::copyNode(int newVersion) {
         }
     }
 
-    // New node starts fresh with no mods
     newNode->modCount = 0;
 
     return newNode;
 }
-

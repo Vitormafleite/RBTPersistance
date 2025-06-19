@@ -30,98 +30,209 @@ Node* RBTree::BinarySearchInsert(Node* root, Node* node) {
     if (!root)
         return node;
 
+    //if (node->nodeValue < root->nodeValue) {
+    //    root->left = BinarySearchInsert(root->left, node);
+    //    root->left->parent = root;
+    //} else {
+    //    root->right = BinarySearchInsert(root->right, node);
+    //    root->right->parent = root;
+    //}
+
     if (node->nodeValue < root->nodeValue) {
-        root->left = BinarySearchInsert(root->left, node);
-        root->left->parent = root;
+        Node* leftChild = BinarySearchInsert(getLeft(root, currentVersion), node);
+        root = setLeft(root, leftChild, currentVersion);
+        if (leftChild != nullptr)
+            setParent(leftChild, root, currentVersion);
     } else {
-        root->right = BinarySearchInsert(root->right, node);
-        root->right->parent = root;
+        Node* rightChild = BinarySearchInsert(getRight(root, currentVersion), node);
+        root = setRight(root, rightChild, currentVersion);
+        if (rightChild != nullptr)
+            setParent(rightChild, root, currentVersion);
     }
 
     return root;
 }
 
+
+//IMPLEMENTATIONS FOR REGULAR RBTREE WITHOUT PARTIAL PERSISTANCE
+//void RBTree::rotateLeft(Node* x) {
+//    Node* y = x->right;
+//    x->right = y->left;
+//    if (y->left)
+//        y->left->parent = x;
+//
+//    y->parent = x->parent;
+//
+//    if (!x->parent)
+//        root = y;
+//    else if (x == x->parent->left)
+//        x->parent->left = y;
+//    else
+//        x->parent->right = y;
+//
+//    y->left = x;
+//    x->parent = y;
+//}
+//
+//void RBTree::rotateRight(Node* x) {
+//    Node* y = x->left;
+//    x->left = y->right;
+//    if (y->right)
+//        y->right->parent = x;
+//
+//    y->parent = x->parent;
+//
+//    if (!x->parent)
+//        root = y;
+//    else if (x == x->parent->right)
+//        x->parent->right = y;
+//    else
+//        x->parent->left = y;
+//
+//    y->right = x;
+//    x->parent = y;
+//}
+
 void RBTree::rotateLeft(Node* x) {
-    Node* y = x->right;
-    x->right = y->left;
-    if (y->left)
-        y->left->parent = x;
+    Node* y = getRight(x, currentVersion);
 
-    y->parent = x->parent;
+    Node* yLeft = getLeft(y, currentVersion);
+    x = setRight(x, yLeft, currentVersion);
 
-    if (!x->parent)
+    if (yLeft != nullptr)
+        setParent(yLeft, x, currentVersion);
+
+    Node* xParent = getParent(x, currentVersion);
+    y = setParent(y, xParent, currentVersion);
+
+    if (xParent == nullptr) {
         root = y;
-    else if (x == x->parent->left)
-        x->parent->left = y;
-    else
-        x->parent->right = y;
+    } else if (x == getLeft(xParent, currentVersion)) {
+        setLeft(xParent, y, currentVersion);
+    } else {
+        setRight(xParent, y, currentVersion);
+    }
 
-    y->left = x;
-    x->parent = y;
+    y = setLeft(y, x, currentVersion);
+    x = setParent(x, y, currentVersion);
 }
 
 void RBTree::rotateRight(Node* x) {
-    Node* y = x->left;
-    x->left = y->right;
-    if (y->right)
-        y->right->parent = x;
+    Node* y = getLeft(x, currentVersion);
 
-    y->parent = x->parent;
+    Node* yRight = getRight(y, currentVersion);
+    x = setLeft(x, yRight, currentVersion);
 
-    if (!x->parent)
+    if (yRight != nullptr)
+        setParent(yRight, x, currentVersion);
+
+    Node* xParent = getParent(x, currentVersion);
+    y = setParent(y, xParent, currentVersion);
+
+    if (xParent == nullptr) {
         root = y;
-    else if (x == x->parent->right)
-        x->parent->right = y;
-    else
-        x->parent->left = y;
+    } else if (x == getRight(xParent, currentVersion)) {
+        setRight(xParent, y, currentVersion);
+    } else {
+        setLeft(xParent, y, currentVersion);
+    }
 
-    y->right = x;
-    x->parent = y;
+    y = setRight(y, x, currentVersion);
+    x = setParent(x, y, currentVersion);
 }
 
+//void RBTree::fixInsert(Node* node) {
+//    while (node != root && node->parent->color == RED) {
+//        Node* parent = node->parent;
+//        Node* grandparent = parent->parent;
+//
+//        if (parent == grandparent->left) {
+//            Node* uncle = grandparent->right;
+//
+//            if (uncle && uncle->color == RED) {
+//                parent->color = BLACK;
+//                uncle->color = BLACK;
+//                grandparent->color = RED;
+//                node = grandparent;
+//            } else {
+//                if (node == parent->right) {
+//                    node = parent;
+//                    rotateLeft(node);
+//                }
+//                parent->color = BLACK;
+//                grandparent->color = RED;
+//                rotateRight(grandparent);
+//            }
+//        } else {
+//            Node* uncle = grandparent->left;
+//
+//            if (uncle && uncle->color == RED) {
+//                parent->color = BLACK;
+//                uncle->color = BLACK;
+//                grandparent->color = RED;
+//                node = grandparent;
+//            } else {
+//                if (node == parent->left) {
+//                    node = parent;
+//                    rotateRight(node);
+//                }
+//                parent->color = BLACK;
+//                grandparent->color = RED;
+//                rotateLeft(grandparent);
+//            }
+//        }
+//    }
+//
+//    root->color = BLACK;
+//}
+
 void RBTree::fixInsert(Node* node) {
-    while (node != root && node->parent->color == RED) {
-        Node* parent = node->parent;
-        Node* grandparent = parent->parent;
+    while (node != root && 
+           getParent(node, currentVersion) != nullptr && 
+           getColor(getParent(node, currentVersion), currentVersion) == RED) {
+        Node* parent = getParent(node, currentVersion);
+        if (!parent) break;  // safety check
 
-        if (parent == grandparent->left) {
-            Node* uncle = grandparent->right;
+        Node* grandparent = getParent(parent, currentVersion);
+        if (!grandparent) break;  // safety check
 
-            if (uncle && uncle->color == RED) {
-                parent->color = BLACK;
-                uncle->color = BLACK;
-                grandparent->color = RED;
+        if (parent == getLeft(grandparent, currentVersion)) {
+            Node* uncle = getRight(grandparent, currentVersion);
+
+            if (uncle != nullptr && getColor(uncle, currentVersion) == RED) {
+                setColor(parent, BLACK, currentVersion);
+                setColor(uncle, BLACK, currentVersion);
+                setColor(grandparent, RED, currentVersion);
                 node = grandparent;
             } else {
-                if (node == parent->right) {
+                if (node == getRight(parent, currentVersion)) {
                     node = parent;
                     rotateLeft(node);
                 }
-                parent->color = BLACK;
-                grandparent->color = RED;
+                setColor(parent, BLACK, currentVersion);
+                setColor(grandparent, RED, currentVersion);
                 rotateRight(grandparent);
             }
         } else {
-            Node* uncle = grandparent->left;
+            Node* uncle = getLeft(grandparent, currentVersion);
 
-            if (uncle && uncle->color == RED) {
-                parent->color = BLACK;
-                uncle->color = BLACK;
-                grandparent->color = RED;
+            if (uncle != nullptr && getColor(uncle, currentVersion) == RED) {
+                setColor(parent, BLACK, currentVersion);
+                setColor(uncle, BLACK, currentVersion);
+                setColor(grandparent, RED, currentVersion);
                 node = grandparent;
             } else {
-                if (node == parent->left) {
+                if (node == getLeft(parent, currentVersion)) {
                     node = parent;
                     rotateRight(node);
                 }
-                parent->color = BLACK;
-                grandparent->color = RED;
+                setColor(parent, BLACK, currentVersion);
+                setColor(grandparent, RED, currentVersion);
                 rotateLeft(grandparent);
             }
         }
     }
-
-    root->color = BLACK;
+    setColor(root, BLACK, currentVersion);
 }
 
 void RBTree::transplant(Node* u, Node* v) {
@@ -293,8 +404,9 @@ void RBTree::updateReturnPointers(Node* oldNode, Node* newNode, int version) {
     }
 }
 
-
+// PRINT FOR NORMAL RBTREE NO PERSISTANCE
 void RBTree::print() {
+
     printTree(root, 0);
     std::cout << std::endl;
 }
@@ -315,4 +427,83 @@ void RBTree::printTree(Node* node, int indent) {
     printTree(node->left, indent + SPACING);
 }
 
+void RBTree::printVersion(int version) {
+    std::cout << "=== Tree at version " << version << " ===" << std::endl;
+    printTreeVersioned(root, version, 0);
+    std::cout << std::endl;
+}
+
+void RBTree::printTreeVersioned(Node* node, int version, int indent) {
+    const int SPACING = 6;
+
+    if (node == nullptr) {
+        std::cout << std::string(indent, ' ') << "null(B)\n";
+        return;
+    }
+
+    printTreeVersioned(getRight(node, version), version, indent + SPACING);
+
+    std::cout << std::string(indent, ' ')
+              << node->nodeValue << (getColor(node, version) == RED ? "(R)" : "(B)") << " [v" << node->nodeVersion << "]\n";
+
+    printTreeVersioned(getLeft(node, version), version, indent + SPACING);
+}
+
+Node* RBTree::getLeft(Node* node, int version) {
+    return static_cast<Node*>(node->getFieldValue(FIELD_LEFT, version));
+}
+
+Node* RBTree::getRight(Node* node, int version) {
+    return static_cast<Node*>(node->getFieldValue(FIELD_RIGHT, version));
+}
+
+Node* RBTree::getParent(Node* node, int version) {
+    return static_cast<Node*>(node->getFieldValue(FIELD_PARENT, version));
+}
+
+Color RBTree::getColor(Node* node, int version) {
+    return *static_cast<Color*>(node->getFieldValue(FIELD_COLOR, version));
+}
+
+Node* RBTree::setLeft(Node* parent, Node* child, int version) {
+    parent->addMod(FIELD_LEFT, static_cast<void*>(child), version);
+
+    if (child != nullptr) {
+        child->rParentLeft = parent;
+    }
+
+    return parent;
+}
+
+Node* RBTree::setRight(Node* parent, Node* child, int version) {
+    parent->addMod(FIELD_RIGHT, static_cast<void*>(child), version);
+
+    if (child != nullptr) {
+        child->rParentRight = parent;
+    }
+
+    return parent;
+}
+
+Node* RBTree::setParent(Node* child, Node* parent, int version) {
+    if (child == nullptr) return child;
+
+    child->addMod(FIELD_PARENT, static_cast<void*>(parent), version);
+
+    if (parent != nullptr) {
+        if (getLeft(parent, version) == child) {
+            child->rParentLeft = parent;
+        } else if (getRight(parent, version) == child) {
+            child->rParentRight = parent;
+        }
+    }
+
+    return child;
+}
+
+
+Node* RBTree::setColor(Node* node, Color color, int version) {
+    node->addMod(FIELD_COLOR, static_cast<void*>(&color), version);
+    return node;
+}
 
